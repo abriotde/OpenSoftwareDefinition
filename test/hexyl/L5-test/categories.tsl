@@ -1,0 +1,109 @@
+-- id: HEXYL-TEST-TSL
+-- level: L5   status: DRAFT   origin: reverse-engineered
+-- Test Specification Language (category-partition). It describes the input space of the two parameter groups that
+-- are tested by combination, and says which choices existing tests exercise.
+-- Notation: choice [property P] [if P] [error] [single]; "-- covered:" names existing tests; "-- GAP" marks no test.
+-- Verifies: HEXYL-CLI-F-004, -005, -006 (byte count) and HEXYL-REN-F-001..008, HEXYL-CLI-F-010..014 (layout).
+
+----------------------------------------------------------------------
+-- Frame 1: byte-count argument (--length, --skip, --display-offset, --block-size)
+-- Detailed rules: L4 HEXYL-CLI-D-SZ.  Existing tests: unit tests of the parser (unit.md, U-CLI-*).
+----------------------------------------------------------------------
+Parameters:
+
+  Sign:
+    none.                          [property plain]            -- covered: U-CLI-2
+    plus.                          [property plain]            -- covered: U-CLI-2
+    minus.                         [property minus]            -- covered: U-CLI-2
+    sign only.                     [error]                     -- covered: U-CLI-2 (EmptyAfterSign)
+    empty text.                    [error]                     -- covered: U-CLI-2 (Empty)
+
+  Notation:
+    decimal.                       [if !signonly] [property dec]
+    hexadecimal.                   [if !signonly] [property hex]
+    hexadecimal with sign inside.  [if !signonly] [error] [property hex]   -- covered: U-CLI-3, U-CLI-5
+    hexadecimal with bad digits.   [if !signonly] [error] [property hex]   -- covered: U-CLI-3
+    decimal too large.             [if !signonly] [error] [property dec]   -- covered: U-CLI-5 (ParseNum)
+    letters only.                  [if !signonly] [error]                  -- covered: U-CLI-5
+
+  Unit:
+    none.                          [if dec]
+    kB MB GB TB.                   [if dec]                    -- covered: U-CLI-1, U-CLI-5
+    kiB MiB GiB TiB.               [if dec]                    -- covered: U-CLI-1, U-CLI-5
+    block with default size.       [if dec]                    -- covered: U-CLI-5
+    block with custom size.        [if dec]                    -- covered: U-CLI-5
+    unit written in other case.    [if dec]                    -- GAP (case-insensitive: only "KB", "GiB" tested)
+    unit with hexadecimal number.  [if hex] [error]            -- GAP
+    unknown unit.                  [error]                     -- covered: U-CLI-4, U-CLI-5
+    unit without number.           [error]                     -- covered: U-CLI-4, U-CLI-5
+    space inside the text.         [error]                     -- covered: U-CLI-5
+    product overflows.             [error]                     -- covered: U-CLI-5
+
+  Context:
+    length.                        [if !minus]
+    skip.
+    display offset.                [if !minus]                 -- GAP for --display-offset=-4 (FND-002)
+    block size.                    [if !minus]                 -- GAP (FND-001 for hexadecimal)
+
+  Constraints:  a count context rejects `minus`; `block` is rejected in context block size.
+
+----------------------------------------------------------------------
+-- Frame 2: layout options for a dump
+-- Rules: L4 HEXYL-REN-D-LAY, HEXYL-REN-D-LOOP.  Existing tests: feature scenarios in functional.feature.
+----------------------------------------------------------------------
+Parameters:
+
+  Panels:
+    one.                           [property p1]               -- covered: squeeze_*_one_panel
+    two (default).                 [property p2]               -- covered
+    three.                         [property p3]               -- covered: squeeze_odd_panels_remainder_bytes
+    four or more.                                              -- covered by a library unit test only (U-REN-4)
+    auto.                                                      -- GAP
+
+  Group size:
+    one (default).
+    two.                                                       -- covered
+    four.                                                      -- covered
+    eight.                                                     -- covered
+    three.                         [error]                     -- covered: group_size_invalid
+
+  Endianness:
+    big (default).
+    little.                        [if grouped]                -- covered for 2, 4, 8
+
+  Base:
+    hexadecimal (default).
+    binary.                                                    -- covered
+    octal.                                                     -- GAP
+    decimal.                                                   -- GAP
+
+  Border:
+    unicode (default).
+    ascii.                                                     -- GAP (only with --plain: none)
+    none.                                                      -- covered through --plain
+
+  Optional panels:
+    both shown (default).
+    no characters.                                             -- covered
+    no position.                                               -- covered
+    neither (plain).                                           -- covered
+
+  Input length class:
+    empty.                         [single]                    -- covered
+    shorter than a line.                                       -- covered
+    exactly one line.                                          -- covered
+    several lines, last one partial.                           -- covered
+    zero run of exactly 2 lines.                               -- GAP
+    long zero run, ends on a line boundary.                    -- covered (4096)
+    long zero run, ends inside a line.                         -- covered (4092)
+    run of a non-zero byte.                                    -- covered (library unit tests)
+    uniform lines that are not identical bytes.                -- GAP: only single-byte-value runs are tested (FND-003)
+
+  Squeezing:
+    enabled (default).
+    disabled.                                                  -- GAP
+
+Constraints:  `Optional panels = neither` combined with `Border = unicode` is not selectable through --plain
+              (the option forces border none) but is through explicit options: GAP.
+Known incoherent combination: `Input length class = empty` with `Panels != two` or `Border != unicode`:
+              the dump layout is wrong (FND-010); GAP, no test.

@@ -1,0 +1,6 @@
+[submodule "test/cloc"]
+	path = test/cloc/cloc
+	url = https://github.com/AlDanial/cloc.git
+[submodule "test/hexyl/hexyl"]
+	path = test/hexyl/hexyl
+	url = https://github.com/sharkdp/hexyl.git
