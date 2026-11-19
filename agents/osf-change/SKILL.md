@@ -58,7 +58,10 @@ For each lower level in order (L2 → L3 → L4 → L5 → L6):
 ### 4. Tests and code
 
 - L5: add/modify tests before code; each references the verified IDs.
-- L6: implement, run tests, fix.
+- L6: implement in **every target** of `open-specification-framework.yaml` that covers the affected
+  area (areas listed, default all), run each target's `test` command, fix.
+  Report results per target. Platform- or target-specific behaviour must be
+  specified at L2–L4 first, never only in one target's code.
 - Code written in this step follows the spec by construction. If a decision
   has to be made that the spec does not cover, add it to L4 (lower level
   detail is allowed) rather than leaving it only in code.

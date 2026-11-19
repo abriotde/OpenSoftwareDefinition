@@ -25,7 +25,7 @@ A specification generated from existing code must not automatically be treated a
 
 ### C-001 — Language independence
 
-Specifications at levels L1 to L5 shall describe the software independently of the programming language used for implementation. The language is recorded only in L1.
+Specifications at levels L1 to L5 shall describe the software independently of the programming language used for implementation. The required language(s) and platform(s) are recorded only in L1; where and how each implementation is built is described by the project configuration (section 4.5).
 
 The specification describes what the system is required to do, how its responsibilities are organised, and how its behaviour is defined. It should not unnecessarily prescribe language-specific constructs.
 
@@ -232,6 +232,8 @@ It may include:
 
 - exceptional situations and expected outcomes;
 
+- quality requirements (performance, security, usability, reliability, ...);
+
 - acceptance criteria.
 
 Requirements should be sufficiently precise to be reviewed and verified.
@@ -323,6 +325,30 @@ L6 is the actual implementation, including source code and relevant implementati
 
 The implementation language and technologies are identified in L1. L6 contains the code itself; it is not another prose specification level.
 
+A project may have several L6 implementations, called **targets** (for example one per language or platform). Each target conforms independently to L1 to L5; none of them defines the specification. Targets are located and described in the project configuration (section 4.5).
+
+
+### 3.7 Standard documents in the levels
+
+Common industry documents are not separate artefacts: they are the specification documents of the levels, named after them and split by chapter. A project uses only the documents it needs (C-013), and the names are recommended, not mandatory.
+
+| File | Level | Chapters |
+| - | - | - |
+| `product_requirements_document.md` (PRD) | L1 | purpose and objectives, users and actors, scope and exclusions, main capabilities, success criteria, global constraints, implementation environment |
+| `software_requirements_specification_part1.md` (SRS, part 1) | L1 | introduction and overall-description chapters of the SRS (ISO/IEC/IEEE 29148) not already covered by the PRD: product perspective and operating context, user characteristics, assumptions and dependencies, definitions, references |
+| `functional_requirements_document.md` (FRD) | L2 | functional requirements, use cases, inputs and outputs, business rules, exceptional situations, acceptance criteria |
+| `software_requirements_specification_part2.md` (SRS, part 2) | L2 | specific-requirements chapters not already covered by the FRD: external interface requirements, quality requirements, design constraints |
+| `software_design_description_part1.md` (SDD, part 1) | L3 | IEEE 1016 viewpoints describing the organisation: context, composition, logical, dependency, interaction, patterns |
+| `software_design_description_part2.md` (SDD, part 2) | L4 | IEEE 1016 viewpoints describing the details: interface, information, structure, state dynamics, algorithm, resource |
+
+Rules:
+
+- **A chapter is written once**, in the file of the level that owns it. A document that would repeat a chapter already covered by another file omits it (C-003). Where a standard requires the chapter to exist, a reference to the authoritative one replaces it.
+- A document that spans levels has one file per level, named with a `_partN` suffix (N in level order) to avoid confusion, each carrying the metadata `document` (for example `SRS`) so that tools can reassemble it.
+- The verification chapters of these standards are specified in L5, and are omitted from these documents.
+- Large projects place these documents in area directories (C-006, C-007), for example `L2-functional/networking/functional_requirements_document.md`.
+- Content outside the method, such as market analysis, roadmap and prioritisation, is not required. A project may keep it elsewhere.
+- Chapter titles follow the standard when a project claims conformance to it. The lists above are indicative.
 
 ## 4. Directory organisation
 
@@ -411,6 +437,44 @@ The hierarchy is a navigational and conceptual structure. It does not require a 
 The specification hierarchy shall describe the logical system, not merely mirror the source-code tree.
 
 This distinction is important for large projects. For example, the logical specification of a subsystem may span several source directories, or a source directory may contain code belonging to several logical concerns.
+
+### 4.5 Project configuration (`open-specification-framework.yaml`)
+
+A project may contain an `open-specification-framework.yaml` file at its root. It locates and describes the parts of the project; it does not specify anything. Every key is optional. The directory containing `open-specification-framework.yaml` is the project root; without the file, the root is the nearest ancestor containing the level directories of section 4.1 and the defaults below apply.
+
+```yaml
+osf: 0.0.2                     # version of the method followed
+project: OHEMS                 # prefix of element identifiers (5.1)
+levels:                        # paths relative to this file
+  L1: spec/L1-general          # default: L1-general
+  L2: spec/L2-functional       # default: L2-functional
+  L3: spec/L3-architectural    # default: L3-architectural
+  L4: spec/L4-detailed         # default: L4-detailed
+  L5: spec/L5-test             # default: L5-test
+targets:                       # default: one target "main" at L6-code
+  - id: python
+    path: src                  # existing source folder, outside the spec tree
+    exclude: [.venv, dist]     # not part of the implementation
+    language: Python
+    platforms: [linux, windows]
+    build: uv build
+    test: uv run pytest
+  - id: rust
+    path: rust
+    language: Rust
+    platforms: [linux]
+    areas: [core]              # areas implemented; default: all
+    test: cargo test
+```
+
+Rules:
+
+- The configuration says **where** and **how**, never **what**. Requirements, including the required languages and platforms, are specified in L1 to L4 (C-003). A target that L1 does not allow, or a required target that is not configured, is a violation of L1.
+- Each target shall conform to the same L1 to L5. A behaviour that differs between targets or platforms shall be specified at L2 to L4 as conditional on the platform or target. Without that, the difference is a violation in the deviating target.
+- A target with `areas` implements only those areas (directory names, C-006). Unimplemented areas are not violations.
+- L5 tests are language-independent; each target binds them to its own `test` command. Results are reported per target.
+- The configuration shall not relax the rules of this method. Paths, commands and exclusions are overridable; principles, statuses and markers are not.
+- A configured path that does not exist is reported to the human; it is not created silently.
 
 
 ## 5. Specification elements and identifiers
@@ -519,7 +583,7 @@ Projects and tools should preserve these distinctions.
 
 The example metadata includes an identifier, name, level, and status.
 
-Recommended optional metadata fields: `origin` (`forward` or `reverse-engineered`), `status` (`DRAFT`, then values defined by the approval workflow).
+Recommended optional metadata fields: `document` (the standard document the file belongs to, section 3.7), `origin` (`forward` or `reverse-engineered`), `status` (`DRAFT`, then values defined by the approval workflow).
 
 Recommended identifier convention for elements: `\<PROJECT\>-\<AREA\>-\<KIND\>-\<nnn\>`, where KIND is `F` (functional requirement, L2), `C` (component, L3) or `D` (detailed element, L4). The convention is not mandatory (see section 11).
 
@@ -627,7 +691,7 @@ Two directions of change are distinguished (see Unidirectional Refinement, secti
 1. Analyse the impact: find the highest level the request affects, the elements that refine or depend on it, and any higher-level element it contradicts.
 2. Update that highest level first, and only the authoritative definition. The request is the approval for the higher-level change it implies and nothing more; ambiguities and side effects are submitted to the human. These edits stay `PENDING` for human review (C-010).
 3. Propagate level by level (L2, L3, L4, L5, L6), checking each against the level above. If a lower level cannot comply, stop and ask instead of changing the higher level.
-4. Write or update tests before the code, implement, and run the tests.
+4. Write or update tests before the code, implement in **every** configured target that covers the affected area, and run each target's tests.
 
 For a new project, the same order applies from an empty L1: the general specification is confirmed by the human before lower levels are derived.
 
@@ -635,14 +699,16 @@ For a new project, the same order applies from an empty L1: the general specific
 
 1. Map each change to the specification elements it implements or verifies.
 2. Classify it: conformance (no specification change), refinement (detail left open by the higher level, recorded at the lowest level that owns it), contradiction, or unspecified behaviour (not assumed to be intended).
-3. Update the levels the change owns, and check it against all applicable higher levels.
+3. Update the levels the change owns, and check it against all applicable higher levels. With several targets, a change that alters behaviour specified at L2 to L4 is a top-down change (the other targets must follow); a change that stays within what the specification leaves open, or within one platform, does not touch the others.
 4. On contradiction, restore compliance if possible. Otherwise insert a marker (section 7.3). The higher-level specification is never modified implicitly; a desirable lower-level behaviour is proposed as a top-down change.
 
-**Audit.** On request or before a release, a read-only check verifies structure, metadata, top-down and bottom-up consistency, single source of truth, traceability, test coverage, implementation compliance, markers and statuses awaiting a human. Findings are reported by severity.
+**Audit.** On request or before a release, a read-only check verifies structure, metadata, top-down and bottom-up consistency, single source of truth, traceability, test coverage, implementation compliance of each target, agreement between targets, configuration (section 4.5) against L1, markers and statuses awaiting a human. Findings are reported by severity.
+
+**External check.** On request, or after updates, a read-only comparison verifies the specifications against a document stored outside the specification tree (for example a customer PRD or a published design document). Each statement of the external document is placed at the level that owns it (section 3.7) and classified as covered, partial, missing, contradicted or ambiguous; specification elements not mentioned externally are listed too. The external document is either upstream (the specifications must satisfy it) or downstream (it must reflect the specifications). Differences are decided by a human and resolved through the top-down workflow or by updating the external document; neither is modified implicitly.
 
 **Reverse engineering** follows section 8.1.
 
-The reference agent skills implementing these workflows are in `agents/` (`osf`, `osf-new-project`, `osf-change`, `osf-sync-up`, `osf-violations`, `osf-audit`, `osf-reverse`). The method is authoritative if they differ.
+The reference agent skills implementing these workflows are in `agents/` (`osf`, `osf-new-project`, `osf-change`, `osf-sync-up`, `osf-violations`, `osf-audit`, `osf-check-external`, `osf-reverse`). The method is authoritative if they differ.
 
 
 

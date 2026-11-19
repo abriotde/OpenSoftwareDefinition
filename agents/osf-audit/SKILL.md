@@ -24,11 +24,17 @@ Load `osf` first. Read-only by default: report, do not fix, unless asked.
 4. **Bottom-up consistency:** no lower element contradicts a higher one
    (compare statements, formats, constants, error messages). Contradiction
    without a marker is a finding.
-5. **Single source (C-003):** duplicated definitions with divergent content.
+5. **Single source (C-003):** duplicated definitions with divergent content,
+   including chapters repeated across PRD / SRS / FRD / SDD files (§3.7), and
+   `document:` parts that no longer cover the chapters the standard requires.
 6. **Traceability and tests (C-005, C-009):** every L2/L4 element lists the
    tests that verify it or says it is not covered; every L5 test references
    existing IDs; list orphans both ways.
-7. **Implementation:** run the test suite; spot-check code against L4 for
+7. **Configuration and targets (§4.5):** `open-specification-framework.yaml` paths exist; configured
+   targets match what L1 requires; each target runs its own tests (report
+   per target); behaviour differing between targets is specified as
+   platform/target-specific, otherwise it is a finding.
+   **Implementation:** run the test suite of each target; spot-check code against L4 for
    behaviours/outputs (C-014) that differ; look for unspecified behaviour.
 8. **Markers:** list every `OSF-VIOLATION` and `OSF-WAIVED`; flag markers
    whose rule ID no longer exists, and `RUNNING` elements left behind.

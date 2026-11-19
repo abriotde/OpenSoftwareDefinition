@@ -27,6 +27,12 @@ completion.
    | Contradiction | Code behaves differently from L1–L4 | Violation (below). |
    | Unspecified | Behaviour exists that no spec covers | Treat as refinement if harmless, otherwise ask. Never assume it is intended (reverse rules, method §8). |
 
+   **Several targets (`open-specification-framework.yaml`):** a change in one target that alters
+   behaviour specified at L2–L4 is not local. Treat it as a top-down change
+   (`osf-change`) so the other targets follow, or mark the deviation. A
+   change within what the spec leaves open, or specified as
+   platform-specific, stays in its target. A difference between targets
+   that the spec does not allow is a violation in the deviating target.
 3. **Update owned sub-levels.** Update L4 and L5 (and L3 if the change is
    purely structural and stays within L2) so they describe the code truthfully
    and still comply with L1–L2. Do this directly: that is the agent's job.

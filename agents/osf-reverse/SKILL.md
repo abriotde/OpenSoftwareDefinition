@@ -33,8 +33,10 @@ approved** (C-010) and observed behaviour is **not** requirement.
 7. Mark every document `origin: reverse-engineered`, `status: DRAFT`.
 8. **Completeness check (§8.2):** ask yourself whether an implementer with
    only L1–L4 could pass the L5 tests; record gaps as findings.
-9. Put reference to the original source in L6 (it may be a separate
-   directory); do not copy third-party code into specs.
+9. **Do not move the existing code.** Create `open-specification-framework.yaml` (method §4.5) with
+   the source folder as a target (`path`, `exclude` for venv/build/vendor
+   folders, `language`, `test`), and the level paths if the specs live in a
+   folder such as `spec/`. Do not copy third-party code into specs.
 
 End with the final report and the list of `OPEN` findings and `ASSUMPTION`s
 for the user to decide.

@@ -39,6 +39,10 @@ Each level refines the one above. **Higher levels are authoritative.**
 5. **Passing tests are not proof of compliance** (L5 verifies L2–L4; it does
    not replace them).
 6. **Concise specs (C-013).** Add detail only when it is new information.
+   Standard documents (PRD, SRS, FRD, SDD) are the level files themselves,
+   split by chapter across levels (method §3.7). Write each chapter once,
+   in the first file that owns it, and omit it from the others. Set
+   `document:` in the front matter. Never create a second copy of a chapter.
 7. Report ambiguities before assuming.
 
 ## Pick the skill
@@ -50,6 +54,7 @@ Each level refines the one above. **Higher levels are authoritative.**
 | Code (or L4/L5) edited directly, or a bug fix, with no spec-level request | `osf-sync-up` |
 | Writing, resolving or waiving a violation marker; end-of-task report | `osf-violations` |
 | User asks "is everything consistent?" / before a release | `osf-audit` |
+| User asks to check accordance with a document stored outside the specs ("check the PRD in myprd.md") | `osf-check-external` |
 | Existing code, no or stale specs | `osf-reverse` |
 
 Several skills can apply in one task (typically `osf-change`, then
@@ -58,13 +63,21 @@ report). Load each when you reach that step.
 
 ## Locating the specification
 
-1. Find the level directories (`L1-*` … `L6-*`) from the project root. If the
-   user works in a sub-folder (e.g. `test/hexyl/`), the nearest ancestor that
-   contains them is the OSF root.
-2. Read top-down and only as deep as needed: L1, then the L2/L3/L4 documents
+1. **Read `open-specification-framework.yaml` first** (method §4.5): it gives the level paths, the
+   **targets** (L6 implementations: path, language, platforms, build/test
+   commands, excluded paths, covered areas) and the ID prefix. Its directory
+   is the OSF root. It says where and how, never what: requirements stay in
+   L1–L4, and it cannot relax these rules.
+   Without it, find the level directories (`L1-*` … `L6-*`); the nearest
+   ancestor of the user's working folder that contains them is the root, with
+   one target `main` at `L6-code`.
+2. Never assume a source folder or language: use the configured targets. Do
+   not create a missing configured path silently; tell the user. Ignore
+   `exclude`d paths when searching code.
+3. Read top-down and only as deep as needed: L1, then the L2/L3/L4 documents
    of the affected area (same directory name across levels, C-006), then L5
    and code.
-3. Use stable IDs from document front matter (C-005), never file paths, to
+4. Use stable IDs from document front matter (C-005), never file paths, to
    reference elements.
 
 ## Element status
