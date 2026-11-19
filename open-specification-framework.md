@@ -1,9 +1,9 @@
-# OpenProduct Software Specification Method
+# Open Specification Framework — Specification Method
 
-## Working Draft — Version 0.1
+## Working Draft — Version 0.0.2
 
-**Status:** Working draft  
-**Language:** English  
+**Status:** Working draft
+**Language:** English
 **Purpose:** Define a language-independent, hierarchical method for specifying software from high-level intent down to source-code implementation.
 
 
@@ -572,25 +572,77 @@ Modifications have possibles states:
 | VIOLATION	|	Contradiction identified	|
 | PENDING	|	Change awaiting validation	|
 | WAIVED	|	Exception explicitly accepted by a human	|
+| DEPRECATED	|	Element kept for traceability but no longer part of the specification; removal requires explicit human authorisation	|
+
+A state is recorded in the `status` metadata of a document or in the marker of a code location (section 7.3). `RUNNING` is transient: an element shall not be left `RUNNING` at the end of a task.
 
 
-### 7.3 Error message
+### 7.3 Violation and waiver markers
 
-Case on VIOLATION or WAIVED a commented message should appear with:
+When a lower-level element contradicts a higher-level rule (status VIOLATION), or deviates from it with human approval (status WAIVED), a comment marker shall appear immediately above the smallest offending element (function, block, requirement, scenario). The marker uses the comment syntax of the host file (`#`, `//`, `--`, `<!-- -->`, ...) and shall not alter the behaviour or validity of the file.
 
-* Rule : The rule id and name offended
-* Description : A short description of the rule to remind it.
-* Violation : A short explanation in why it is offended.
-* Comment : For WAIVED status, a explanation for exception to the rule
-* Status: VIOLATION or WAIVED
+Fields, in this order:
 
-Exemple:
+* Rule: the stable identifier and name of the higher-level rule offended (never a file path).
+* Description: a short reminder of the rule.
+* Violation: a short explanation of why it is offended.
+* Comment: for WAIVED only, the human's justification for the exception.
+* Status: VIOLATION or WAIVED.
+
+There is one marker per rule per location.
+
+Example, violation:
 ```
-# OSD-VIOLATION:
-#    Rule: L1-REQ-003
+# OSF-VIOLATION:
+#    Rule: L1-REQ-003 Data privacy
 #    Description: All user data must remain private.
 #    Violation: This specification allows public access.
+#    Status: VIOLATION
 ```
+
+Example, waiver:
+```
+# OSF-WAIVED:
+#    Rule: L1-REQ-003 Data privacy
+#    Description: All user data must remain private.
+#    Violation: Public access is allowed on the demo instance.
+#    Comment: Accepted by the project owner for the demo only.
+#    Status: WAIVED
+```
+
+A marker shall never be removed or softened silently. A violation is resolved only by:
+
+1. modifying the lower-level element to restore compliance;
+2. changing the higher-level specification through the review process (section 7.2, then 7.4); or
+3. an explicit human waiver, which turns the marker into `OSF-WAIVED`. An agent shall not waive on its own initiative.
+
+A waived marker remains as documentation and is re-evaluated when the rule it deviates from changes. At the end of a task, an agent shall report to the user every violation that is new, still open, resolved or waived.
+
+### 7.4 Change workflows
+
+Two directions of change are distinguished (see Unidirectional Refinement, section 3).
+
+**Top-down (a request to add, change or remove behaviour, or to start a project).**
+
+1. Analyse the impact: find the highest level the request affects, the elements that refine or depend on it, and any higher-level element it contradicts.
+2. Update that highest level first, and only the authoritative definition. The request is the approval for the higher-level change it implies and nothing more; ambiguities and side effects are submitted to the human. These edits stay `PENDING` for human review (C-010).
+3. Propagate level by level (L2, L3, L4, L5, L6), checking each against the level above. If a lower level cannot comply, stop and ask instead of changing the higher level.
+4. Write or update tests before the code, implement, and run the tests.
+
+For a new project, the same order applies from an empty L1: the general specification is confirmed by the human before lower levels are derived.
+
+**Bottom-up (an edit of code, tests or detailed specifications).**
+
+1. Map each change to the specification elements it implements or verifies.
+2. Classify it: conformance (no specification change), refinement (detail left open by the higher level, recorded at the lowest level that owns it), contradiction, or unspecified behaviour (not assumed to be intended).
+3. Update the levels the change owns, and check it against all applicable higher levels.
+4. On contradiction, restore compliance if possible. Otherwise insert a marker (section 7.3). The higher-level specification is never modified implicitly; a desirable lower-level behaviour is proposed as a top-down change.
+
+**Audit.** On request or before a release, a read-only check verifies structure, metadata, top-down and bottom-up consistency, single source of truth, traceability, test coverage, implementation compliance, markers and statuses awaiting a human. Findings are reported by severity.
+
+**Reverse engineering** follows section 8.1.
+
+The reference agent skills implementing these workflows are in `agents/` (`osf`, `osf-new-project`, `osf-change`, `osf-sync-up`, `osf-violations`, `osf-audit`, `osf-reverse`). The method is authoritative if they differ.
 
 
 
