@@ -10,8 +10,12 @@ description: >
 
 # OSF — core rules
 
-Reference: `open-specification-framework.md` (the method). If this skill and the
-method disagree, the method wins; report the discrepancy.
+The method is `references/open-specification-framework.md` (path relative to
+this skill). Other osf-* skills cite it as "method §N". Read only the sections
+you need. If the local file is missing, fetch the pinned canonical copy:
+<https://raw.githubusercontent.com/abriotde/OpenSoftwareDefinition/v0.0.4/agents/osf/references/open-specification-framework.md>
+(the URL must be bumped together with these skills). If a skill and the method
+disagree, the method wins; report the discrepancy.
 
 ## Levels
 
